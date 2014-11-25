@@ -3,8 +3,8 @@
 # Recipe:: default
 #
 
-if ['util'].include?(node[:instance_role])
-  if node[:name] == 'redis'
+if ['db_master'].include?(node[:instance_role])
+  # if node[:name] == 'redis'
 
     sysctl "Enable Overcommit Memory" do
       variables 'vm.overcommit_memory' => 1
@@ -46,13 +46,13 @@ if ['util'].include?(node[:instance_role])
         :rdbcompression => node[:redis][:rdbcompression],
       })
     end
-    
+
     # redis-server is in /usr/bin on stable-v2, /usr/sbin for stable-v4
     if Chef::VERSION[/^0.6/]
       bin_path = "/usr/bin/redis-server"
     else
       bin_path = "/usr/sbin/redis-server"
-    end  
+    end
 
     template "/data/monit.d/redis_util.monitrc" do
       owner 'root'
@@ -72,12 +72,12 @@ if ['util'].include?(node[:instance_role])
     execute "monit reload" do
       action :run
     end
-  end
+  # end
 end
 
-if ['solo', 'app', 'app_master', 'util'].include?(node[:instance_role])
+if ['solo', 'app', 'app_master', 'db_master'].include?(node[:instance_role])
   instances = node[:engineyard][:environment][:instances]
-  redis_instance = (node[:instance_role][/solo/] && instances.length == 1) ? instances[0] : instances.find{|i| i[:name].to_s[/redis/]}
+  redis_instance = instances.find{|i| i[:instance_role].to_s[/db_master/]}
 
   if redis_instance
     ip_address = `ping -c 1 #{redis_instance[:private_hostname]} | awk 'NR==1{gsub(/\\(|\\)/,"",$3); print $3}'`.chomp
