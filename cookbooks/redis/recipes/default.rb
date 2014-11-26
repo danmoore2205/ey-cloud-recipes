@@ -3,7 +3,7 @@
 # Recipe:: default
 #
 
-if ['db_master'].include?(node[:instance_role])
+if ['app'].include?(node[:instance_role])
   # if node[:name] == 'redis'
 
     sysctl "Enable Overcommit Memory" do
@@ -77,7 +77,7 @@ end
 
 if ['solo', 'app', 'app_master', 'db_master'].include?(node[:instance_role])
   instances = node[:engineyard][:environment][:instances]
-  redis_instance = instances.find{|i| i[:instance_role].to_s[/db_master/]}
+  redis_instance = instances.find{|i| i[:role] == 'app' }
 
   if redis_instance
     ip_address = `ping -c 1 #{redis_instance[:private_hostname]} | awk 'NR==1{gsub(/\\(|\\)/,"",$3); print $3}'`.chomp
